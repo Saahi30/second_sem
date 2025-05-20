@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +25,11 @@ interface GeminiEvent {
   date: string;
   description: string;
   type: 'upcoming' | 'historical';
+}
+
+interface GeminiChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 // Calculate luminance of RGB color
@@ -99,6 +104,12 @@ export default function HomePage() {
   const [geminiEvents, setGeminiEvents] = useState<GeminiEvent[] | null>(null);
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [geminiError, setGeminiError] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<GeminiChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const chatBoxRef = useRef<HTMLDivElement>(null);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
@@ -205,6 +216,13 @@ export default function HomePage() {
       });
   }, [location]);
 
+  // Scroll chat to bottom on new message
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
+
   const handleDateSelect = (value: Date | Date[] | null) => {
     const date = value instanceof Date ? value : Array.isArray(value) && value[0] instanceof Date ? value[0] : null;
     if (date) {
@@ -215,6 +233,35 @@ export default function HomePage() {
 
   const textColorClass = isDarkBg ? 'text-white' : 'text-black';
   const overlayColor = isDarkBg ? 'bg-black/70' : 'bg-white/70';
+
+  const sendChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || !location) return;
+    setChatLoading(true);
+    setChatError(null);
+    const userMsg = { role: 'user' as const, content: chatInput };
+    setChatHistory((h) => [...h, userMsg]);
+    setChatInput('');
+    try {
+      const res = await fetch('/api/gemini-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: userMsg.content,
+          lat: location.lat,
+          lon: location.lon,
+          events: geminiEvents?.filter(e => e.type === 'historical') || [],
+        }),
+      });
+      const data = await res.json();
+      if (data.error) setChatError(data.error);
+      if (data.reply) setChatHistory((h) => [...h, { role: 'assistant', content: data.reply }]);
+    } catch {
+      setChatError('Failed to get response from Gemini.');
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   if (showSplash) {
     return (
@@ -346,31 +393,89 @@ export default function HomePage() {
       </main>
       {session && (
         <div className="w-full max-w-2xl mx-auto mt-8">
-          <div className="bg-gray-900/80 rounded-lg p-6 shadow-lg text-white">
-            <h2 className="text-2xl font-bold mb-4">Location-Specific Astronomical Events</h2>
+          <div className="bg-gray-900/90 rounded-2xl p-8 shadow-2xl text-white border border-gray-800">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span className="material-icons text-indigo-400">event</span>
+              Location-Specific Astronomical Events
+            </h2>
             {geminiLoading && <p>Loading events...</p>}
             {geminiError && <p className="text-red-400">{geminiError}</p>}
             {geminiEvents && geminiEvents.length > 0 ? (
               <div>
-                <h3 className="font-semibold mb-2">Upcoming Events</h3>
-                <ul className="mb-4">
+                <h3 className="font-semibold mb-2 text-indigo-300">Upcoming Events</h3>
+                <ul className="mb-4 pl-4 list-disc">
                   {geminiEvents.filter(e => e.type === 'upcoming').map((event, idx) => (
                     <li key={idx} className="mb-2">
-                      <span className="font-bold">{event.title}</span> ({event.date}): {event.description}
+                      <span className="font-bold text-indigo-200">{event.title}</span> <span className="text-gray-300">({event.date})</span>: {event.description}
                     </li>
                   ))}
                 </ul>
-                <h3 className="font-semibold mb-2">Historical Events</h3>
-                <ul>
+                <h3 className="font-semibold mb-2 text-indigo-300">Historical Events</h3>
+                <ul className="pl-4 list-disc">
                   {geminiEvents.filter(e => e.type === 'historical').map((event, idx) => (
                     <li key={idx} className="mb-2">
-                      <span className="font-bold">{event.title}</span> ({event.date}): {event.description}
+                      <span className="font-bold text-indigo-200">{event.title}</span> <span className="text-gray-300">({event.date})</span>: {event.description}
                     </li>
                   ))}
                 </ul>
               </div>
             ) : !geminiLoading && <p>No events found for your location.</p>}
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowChat(true)}
+                className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200"
+              >
+                <span className="material-icons align-middle mr-2">chat</span>
+                Chat with Gemini
+              </button>
+            </div>
           </div>
+          {/* Gemini Chat Modal */}
+          {showChat && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+              <div className="bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-lg relative border-2 border-indigo-700 animate-fadeIn">
+                <button
+                  onClick={() => setShowChat(false)}
+                  className="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl font-bold"
+                  aria-label="Close chat"
+                >
+                  ×
+                </button>
+                <h2 className="text-xl font-bold mb-4 text-indigo-300 flex items-center gap-2">
+                  <span className="material-icons">smart_toy</span>
+                  Gemini Chat
+                </h2>
+                <div ref={chatBoxRef} className="h-64 overflow-y-auto bg-black/30 rounded p-3 mb-4 border border-gray-700">
+                  {chatHistory.length === 0 && <div className="text-gray-400">Ask about historical astronomical events for your location...</div>}
+                  {chatHistory.map((msg, idx) => (
+                    <div key={idx} className={msg.role === 'user' ? 'text-right' : 'text-left'}>
+                      <span className={msg.role === 'user' ? 'bg-indigo-600' : 'bg-gray-700'} style={{ display: 'inline-block', borderRadius: 8, padding: '6px 12px', margin: '4px 0', color: 'white' }}>{msg.content}</span>
+                    </div>
+                  ))}
+                  {chatLoading && <div className="text-indigo-300">Gemini is typing...</div>}
+                </div>
+                {chatError && <div className="text-red-400 mb-2">{chatError}</div>}
+                <form onSubmit={sendChat} className="flex gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 rounded px-3 py-2 text-black"
+                    placeholder="Ask about a historical event..."
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    disabled={chatLoading}
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                    disabled={chatLoading || !chatInput.trim()}
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
