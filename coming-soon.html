@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming Soon</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #11131a;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+    }
+    .container {
+      background: rgba(24,24,28,0.92);
+      border-radius: 2rem;
+      box-shadow: 0 8px 32px rgba(20,20,40,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+      padding: 3rem 4rem;
+      text-align: center;
+      animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .coming-soon {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      animation: float 2.5s ease-in-out infinite alternate;
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      color: #bfc2d4;
+      opacity: 0.92;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.01em;
+      animation: fadeIn 2s 0.5s backwards;
+    }
+    .timer {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #ffb703;
+      letter-spacing: 0.08em;
+      background: rgba(255,255,255,0.07);
+      border-radius: 1rem;
+      padding: 0.7rem 2rem;
+      margin: 0 auto 0.5rem auto;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      animation: fadeIn 2.2s 1s backwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      from { transform: translateY(0); }
+      to { transform: translateY(-18px); }
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 2rem 1rem;
+      }
+      .coming-soon {
+        font-size: 2rem;
+      }
+      .subtitle {
+        font-size: 1rem;
+      }
+      .timer {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+      }
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="coming-soon">Coming Soon</div>
+    <div class="subtitle">We're working hard to launch something amazing.<br>Stay tuned!</div>
+    <div class="timer" id="timer">05:00:00</div>
+  </div>
+  <script>
+    // 5 hours in seconds
+    let timeLeft = 5 * 60 * 60;
+    const timerEl = document.getElementById('timer');
+    function pad(n) { return n.toString().padStart(2, '0'); }
+    function updateTimer() {
+      const hours = Math.floor(timeLeft / 3600);
+      const minutes = Math.floor((timeLeft % 3600) / 60);
+      const seconds = timeLeft % 60;
+      timerEl.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      if (timeLeft > 0) timeLeft--;
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+  </script>
+</body>
+</html> 
