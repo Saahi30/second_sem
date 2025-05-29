@@ -31,28 +31,13 @@ Return the result as a JSON array of objects with fields: title, date, descripti
     let events: any[] = [];
     try {
       // Try to parse the first JSON array in the response
-      const match = text.match(/\[.*\]/);
+      const match = text.match(/\[.*\]/s);
       if (match) {
         events = JSON.parse(match[0]);
-        // Filter upcoming events to only those after today
-        const today = getToday();
-        events = events.filter((event: any) => {
-          if (event.type === 'upcoming') {
-            // Try to parse the event date
-            const eventDate = new Date(event.date);
-            return !isNaN(eventDate.getTime()) && eventDate > today;
-          }
-          return true; // keep historical events as is
-        });
       }
     } catch {}
     return Response.json({ events });
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Failed to fetch from Gemini.' }), { status: 500 });
   }
-}
-
-function getToday() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 } 
