@@ -29,17 +29,17 @@ import HomePage from './HomePage';
 
 const features = [
   {
-    icon: <BoltOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />, // Travel Through Time & Space
+    icon: <BoltOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />,
     title: 'Travel Through Time & Space',
     desc: `Browse any date to uncover the skies' secrets—past, present, and future—all beautifully presented with real-time data and animations.`,
   },
   {
-    icon: <StarBorderOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />, // Stay in Sync with the Stars
+    icon: <StarBorderOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />,
     title: 'Stay in Sync with the Stars',
     desc: `Discover upcoming meteor showers, eclipses, and historical astronomical events tailored to your location using cutting-edge APIs.`,
   },
   {
-    icon: <ThumbUpAltOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />, // Astronomy at Your Fingertips
+    icon: <ThumbUpAltOutlinedIcon sx={{ color: '#6ec1e4', fontSize: 24 }} />,
     title: 'Astronomy at Your Fingertips',
     desc: `Get personalized celestial insights—sunrise, sunset, moon phases, and more—based on your exact location and selected date.`,
   },
@@ -94,8 +94,16 @@ const handleGoogleAuth = async () => {
 const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+  };
 
   return (
     <Box
@@ -112,7 +120,6 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
       }}
     >
       <Grid container sx={{ height: '100vh', width: '100vw' }}>
-        {/* Left: Logo & Features */}
         <Grid
           item
           xs={12}
@@ -130,7 +137,6 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
         >
           <FeaturesColumn />
         </Grid>
-        {/* Right: Login Card */}
         <Grid
           item
           xs={12}
@@ -168,7 +174,7 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
             >
               Sign in
             </Typography>
-            <Box component="form" display="flex" flexDirection="column" gap={2}>
+            <Box component="form" display="flex" flexDirection="column" gap={2} onSubmit={handleSubmit}>
               <TextField
                 label="Email"
                 type="email"
@@ -176,6 +182,8 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 required
                 variant="filled"
                 placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -193,6 +201,8 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 fullWidth
                 required
                 variant="filled"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -247,47 +257,59 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                   boxShadow: '0 2px 8px 0 rgba(16,21,28,0.10)',
                   textTransform: 'none',
                   '&:hover': {
-                    background: '#dbe2ec',
+                    backgroundColor: '#6ec1e4',
+                    color: '#fff',
+                    boxShadow: '0 4px 14px 0 rgba(110,193,228,0.6)',
                   },
                 }}
-                fullWidth
               >
                 Sign in
               </Button>
-              <Typography
-                variant="body2"
-                mt={1}
-                textAlign="center"
-                sx={{ color: 'rgba(255,255,255,0.7)' }}
-              >
-                Don&apos;t have an account?{' '}
-                <Link href="#" underline="hover" sx={{ color: '#6ec1e4', fontWeight: 600 }} onClick={onSwitch}>
-                  Sign up
-                </Link>
-              </Typography>
-              <Divider sx={{ my: 2, color: 'rgba(255,255,255,0.12)' }}>or</Divider>
-              <Button
-                variant="outlined"
-                startIcon={<GoogleIcon />}
-                onClick={handleGoogleAuth}
-                sx={{
-                  borderRadius: 2,
-                  borderColor: '#6ec1e4',
-                  color: '#fff',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  mb: 1,
-                  background: 'rgba(255,255,255,0.01)',
-                  '&:hover': {
-                    background: 'rgba(110,193,228,0.08)',
-                    borderColor: '#143d81',
-                  },
-                }}
-                fullWidth
-              >
-                Sign in with Google
-              </Button>
             </Box>
+            <Divider sx={{ my: 3, borderColor: '#2b364c' }}>or</Divider>
+            <Button
+              variant="outlined"
+              startIcon={<GoogleIcon />}
+              sx={{
+                py: 1.4,
+                borderRadius: 2,
+                color: '#6ec1e4',
+                borderColor: '#6ec1e4',
+                fontWeight: 600,
+                fontSize: '1rem',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#a9d4ff',
+                  backgroundColor: 'rgba(110,193,228,0.08)',
+                },
+              }}
+              onClick={handleGoogleAuth}
+            >
+              Sign in with Google
+            </Button>
+            <Typography
+              mt={3}
+              textAlign="center"
+              fontSize={14}
+              color="#b0c4de"
+              sx={{ userSelect: 'none' }}
+            >
+              Don’t have an account?{' '}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={onSwitch}
+                sx={{
+                  color: '#6ec1e4',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                Sign up
+              </Link>
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -298,10 +320,40 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
 const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [age, setAge] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("Passwords don't match");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          gender,
+        },
+      },
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert('Sign up successful! Please check your email to confirm.');
+    }
+  };
 
   return (
     <Box
@@ -318,7 +370,6 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
       }}
     >
       <Grid container sx={{ height: '100vh', width: '100vw' }}>
-        {/* Left: Logo & Features */}
         <Grid
           item
           xs={12}
@@ -336,7 +387,6 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
         >
           <FeaturesColumn />
         </Grid>
-        {/* Right: Sign Up Card */}
         <Grid
           item
           xs={12}
@@ -374,14 +424,16 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
             >
               Sign up
             </Typography>
-            <Box component="form" display="flex" flexDirection="column" gap={2}>
+            <Box component="form" display="flex" flexDirection="column" gap={2} onSubmit={handleSubmit}>
               <TextField
                 label="Name"
                 type="text"
                 fullWidth
                 required
                 variant="filled"
-                placeholder="Your name"
+                placeholder="John Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -393,29 +445,6 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 }}
                 InputLabelProps={{ style: { color: '#b0c4de', fontSize: 15 } }}
               />
-              <FormControl variant="filled" fullWidth required sx={{
-                background: '#181f2a',
-                borderRadius: 2,
-                mt: 0,
-              }}>
-                <InputLabel sx={{ color: '#b0c4de', fontSize: 15 }}>Age</InputLabel>
-                <Select
-                  value={age}
-                  onChange={e => setAge(e.target.value)}
-                  disableUnderline
-                  sx={{
-                    color: '#fff',
-                    borderRadius: 2,
-                    fontSize: 16,
-                    '.MuiSelect-icon': { color: '#b0c4de' },
-                  }}
-                  label="Age"
-                >
-                  {Array.from({ length: 86 }, (_, i) => 5 + i).map(num => (
-                    <MenuItem key={num} value={num}>{num}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
               <TextField
                 label="Email"
                 type="email"
@@ -423,6 +452,8 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 required
                 variant="filled"
                 placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -440,6 +471,8 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 fullWidth
                 required
                 variant="filled"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -469,6 +502,8 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 fullWidth
                 required
                 variant="filled"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 InputProps={{
                   disableUnderline: true,
                   sx: {
@@ -492,6 +527,23 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 }}
                 InputLabelProps={{ style: { color: '#b0c4de', fontSize: 15 } }}
               />
+              <FormControl fullWidth variant="filled" sx={{ background: '#181f2a', borderRadius: 2 }}>
+                <InputLabel sx={{ color: '#b0c4de' }}>Gender</InputLabel>
+                <Select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  label="Gender"
+                  sx={{
+                    color: '#fff',
+                    '& .MuiSelect-icon': { color: '#b0c4de' },
+                  }}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="male">Male</MenuItem>
+                  <MenuItem value="female">Female</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
               <Button
                 type="submit"
                 variant="contained"
@@ -502,52 +554,42 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                   py: 1.3,
                   fontWeight: 600,
                   fontSize: '1.1rem',
-                  background: '#e6eaf1',
-                  color: '#181f2a',
-                  boxShadow: '0 2px 8px 0 rgba(16,21,28,0.10)',
-                  textTransform: 'none',
-                  '&:hover': {
-                    background: '#dbe2ec',
-                  },
-                }}
-                fullWidth
-              >
-                Sign up
-              </Button>
-              <Typography
-                variant="body2"
-                mt={1}
-                textAlign="center"
-                sx={{ color: 'rgba(255,255,255,0.7)' }}
-              >
-                Already have an account?{' '}
-                <Link href="#" underline="hover" sx={{ color: '#6ec1e4', fontWeight: 600 }} onClick={onSwitch}>
-                  Sign in
-                </Link>
-              </Typography>
-              <Divider sx={{ my: 2, color: 'rgba(255,255,255,0.12)' }}>or</Divider>
-              <Button
-                variant="outlined"
-                startIcon={<GoogleIcon />}
-                onClick={handleGoogleAuth}
-                sx={{
-                  borderRadius: 2,
-                  borderColor: '#6ec1e4',
+                  background: '#6ec1e4',
                   color: '#fff',
+                  boxShadow: '0 2px 8px 0 rgba(110,193,228,0.5)',
                   textTransform: 'none',
-                  fontWeight: 600,
-                  mb: 1,
-                  background: 'rgba(255,255,255,0.01)',
                   '&:hover': {
-                    background: 'rgba(110,193,228,0.08)',
-                    borderColor: '#143d81',
+                    backgroundColor: '#5cb0de',
+                    boxShadow: '0 4px 14px 0 rgba(110,193,228,0.7)',
                   },
                 }}
-                fullWidth
               >
-                Sign up with Google
+                Create Account
               </Button>
             </Box>
+            <Typography
+              mt={3}
+              textAlign="center"
+              fontSize={14}
+              color="#b0c4de"
+              sx={{ userSelect: 'none' }}
+            >
+              Already have an account?{' '}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={onSwitch}
+                sx={{
+                  color: '#6ec1e4',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                Sign in
+              </Link>
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -555,38 +597,34 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   );
 };
 
-const App: React.FC = () => {
-  const [showSplash, setShowSplash] = useState(true);
+function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    })
+    // Get current session
+    const currentSession = supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setIsLoading(false);
+    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
-
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out:', error);
-    } else {
-      console.log('User logged out');
-    }
+    await supabase.auth.signOut();
   };
 
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
+  if (isLoading) {
+    return <SplashScreen />;
   }
 
   if (session) {
@@ -598,6 +636,6 @@ const App: React.FC = () => {
   ) : (
     <LoginScreen onSwitch={() => setIsSignUp(true)} />
   );
-};
+}
 
 export default App;
