@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SplashScreen from './SplashScreen';
 import {
   Box,
@@ -25,6 +25,7 @@ import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
 import { supabase } from './supabaseClient';
+import HomePage from './HomePage';
 
 const features = [
   {
@@ -557,12 +558,41 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
   };
 
-  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+    } else {
+      console.log('User logged out');
+    }
+  };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  if (session) {
+    return <HomePage session={session} handleLogout={handleLogout} />;
+  }
+
   return isSignUp ? (
     <SignUpScreen onSwitch={() => setIsSignUp(false)} />
   ) : (
