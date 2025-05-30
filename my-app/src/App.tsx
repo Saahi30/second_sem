@@ -13,6 +13,10 @@ import {
   Link,
   Grid,
   Divider,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -20,6 +24,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
+import { supabase } from './supabaseClient';
 
 const features = [
   {
@@ -79,6 +84,11 @@ const FeaturesColumn = () => (
     ))}
   </Box>
 );
+
+const handleGoogleAuth = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+  if (error) alert(error.message);
+};
 
 const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -258,6 +268,7 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
               <Button
                 variant="outlined"
                 startIcon={<GoogleIcon />}
+                onClick={handleGoogleAuth}
                 sx={{
                   borderRadius: 2,
                   borderColor: '#6ec1e4',
@@ -286,6 +297,7 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
 const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [age, setAge] = useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
@@ -380,6 +392,29 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
                 }}
                 InputLabelProps={{ style: { color: '#b0c4de', fontSize: 15 } }}
               />
+              <FormControl variant="filled" fullWidth required sx={{
+                background: '#181f2a',
+                borderRadius: 2,
+                mt: 0,
+              }}>
+                <InputLabel sx={{ color: '#b0c4de', fontSize: 15 }}>Age</InputLabel>
+                <Select
+                  value={age}
+                  onChange={e => setAge(e.target.value)}
+                  disableUnderline
+                  sx={{
+                    color: '#fff',
+                    borderRadius: 2,
+                    fontSize: 16,
+                    '.MuiSelect-icon': { color: '#b0c4de' },
+                  }}
+                  label="Age"
+                >
+                  {Array.from({ length: 86 }, (_, i) => 5 + i).map(num => (
+                    <MenuItem key={num} value={num}>{num}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 label="Email"
                 type="email"
@@ -493,6 +528,7 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
               <Button
                 variant="outlined"
                 startIcon={<GoogleIcon />}
+                onClick={handleGoogleAuth}
                 sx={{
                   borderRadius: 2,
                   borderColor: '#6ec1e4',
