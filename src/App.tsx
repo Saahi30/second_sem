@@ -91,11 +91,16 @@ const handleGoogleAuth = async () => {
   if (error) alert(error.message);
 };
 
-const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
+const LoginScreen: React.FC<{ onSwitch: () => void, onLogin: () => void }> = ({ onSwitch, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form from submitting and refreshing the page
+    onLogin(); // Call the login handler
+  };
 
   return (
     <Box
@@ -168,7 +173,7 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
             >
               Sign in
             </Typography>
-            <Box component="form" display="flex" flexDirection="column" gap={2}>
+            <Box component="form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2}>
               <TextField
                 label="Email"
                 type="email"
@@ -295,13 +300,18 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   );
 };
 
-const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
+const SignUpScreen: React.FC<{ onSwitch: () => void, onLogin: () => void }> = ({ onSwitch, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [age, setAge] = useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form from submitting and refreshing the page
+    onLogin(); // Call the login handler
+  };
 
   return (
     <Box
@@ -374,7 +384,7 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
             >
               Sign up
             </Typography>
-            <Box component="form" display="flex" flexDirection="column" gap={2}>
+            <Box component="form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2}>
               <TextField
                 label="Name"
                 type="text"
@@ -558,45 +568,34 @@ const SignUpScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
 
   const handleSplashComplete = () => {
     setShowSplash(false);
   };
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out:', error);
-    } else {
-      console.log('User logged out');
-    }
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('isAuthenticated', 'true');
   };
 
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+  };
 
-  if (session) {
-    return <HomePage session={session} handleLogout={handleLogout} />;
+  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
+  
+  if (isAuthenticated) {
+    return <HomePage onLogout={handleLogout} />;
   }
 
   return isSignUp ? (
-    <SignUpScreen onSwitch={() => setIsSignUp(false)} />
+    <SignUpScreen onSwitch={() => setIsSignUp(false)} onLogin={handleLogin} />
   ) : (
-    <LoginScreen onSwitch={() => setIsSignUp(true)} />
+    <LoginScreen onSwitch={() => setIsSignUp(true)} onLogin={handleLogin} />
   );
 };
 
