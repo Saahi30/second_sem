@@ -1,7 +1,16 @@
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: radial-gradient(ellipse at 60% 40%, #0f2027 0%, #2c5364 100%);
+  overflow: hidden;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  height: 100%;
+  width: 100%;
   text-align: center;
 }
 
