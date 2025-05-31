@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, Avatar, Box, Typography, IconButton, Menu, MenuItem, TextField, InputAdornment } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Avatar, Box, Typography, IconButton, Menu, MenuItem, TextField, InputAdornment, CircularProgress, Tabs, Tab } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import './App.css';
+import AstronomyEventDialog from './AstronomyEventDialog';
+import { fetchTopSpaceNews } from '../utils/geminiApi';
 
 interface HomePageProps {
   session: any; // Supabase session object
@@ -25,6 +27,12 @@ const HomePage: React.FC<HomePageProps> = ({ session, handleLogout }) => {
   // State for current date and time
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
+  const [news, setNews] = useState<{ headline: string; brief: string; source: string }[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<{ headline: string; brief: string; source: string } | null>(null);
+
+  const [tab, setTab] = useState(0);
+
   useEffect(() => {
     // Update current date and time every second
     const timerId = setInterval(() => {
@@ -33,6 +41,11 @@ const HomePage: React.FC<HomePageProps> = ({ session, handleLogout }) => {
 
     // Cleanup timer
     return () => clearInterval(timerId);
+  }, []);
+
+  useEffect(() => {
+    setNewsLoading(true);
+    fetchTopSpaceNews().then(setNews).finally(() => setNewsLoading(false));
   }, []);
 
   const handleDateInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,217 +92,201 @@ const HomePage: React.FC<HomePageProps> = ({ session, handleLogout }) => {
   const formattedDate = currentDateTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const formattedTime = currentDateTime.toLocaleTimeString();
 
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'radial-gradient(ellipse at 60% 40%, #0f2027 0%, #2c5364 100%)',
-        color: '#fff',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        // Basic fade-in for the whole page
-        animation: 'fadeIn 1s ease-out'
-      }}
-    >
-      {/* Header */}
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: 4,
-        py: 2,
-        background: 'rgba(10, 20, 40, 0.7)',
-        boxShadow: '0 2px 16px 0 rgba(16,21,28,0.25)',
-        borderBottom: '1px solid #233',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        flexWrap: 'wrap',
-        gap: 2,
-        transition: 'background 0.3s ease-in-out' // Animation for header background
-      }}>
-        {/* Left side: Location, Date, Time, Quick Info */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexGrow: 1, justifyContent: 'flex-start' }}>
-          <Box sx={{ transition: 'transform 0.3s ease-in-out' /* Animation for date/time block */, '&:hover': { transform: 'translateY(-3px)' } }}>
-            <Typography variant="body2" sx={{ color: '#b0c4de', fontSize: 14 }}>
-              Location: (Placeholder)
-            </Typography>
-            <Typography variant="body1" fontWeight={500} sx={{ color: '#fff' }}>
-              {formattedDate}
-            </Typography>
-            <Typography variant="body1" fontWeight={500} sx={{ color: '#fff' }}>
-              {formattedTime}
-            </Typography>
-          </Box>
-          <IconButton
-            aria-label="quick info"
-            onClick={handleInfoMenuOpen}
-            sx={{
-              color: '#6ec1e4',
-              transition: 'transform 0.2s ease-in-out', // Animation for info button
-              '&:hover': { transform: 'rotate(15deg) scale(1.1)' }
-            }}
-          >
-            <InfoOutlinedIcon />
-          </IconButton>
-          <Menu
-            anchorEl={infoMenuAnchorEl}
-            open={isInfoMenuOpen}
-            onClose={handleInfoMenuClose}
-            PaperProps={{
-              sx: {
-                background: 'rgba(18, 24, 36, 0.98)',
-                color: '#fff',
-                borderRadius: 2,
-                boxShadow: '0 4px 16px rgba(16,21,28,0.6)',
-                border: '1px solid #233',
-                animation: 'menuFadeIn 0.3s ease-out' // Animation for menu
-              }
-            }}
-          >
-            <MenuItem onClick={handleInfoMenuClose}>Sunrise: (Placeholder)</MenuItem>
-            <MenuItem onClick={handleInfoMenuClose}>Sunset: (Placeholder)</MenuItem>
-            <MenuItem onClick={handleInfoMenuClose}>Moonrise: (Placeholder)</MenuItem>
-            <MenuItem onClick={handleInfoMenuClose}>Moonset: (Placeholder)</MenuItem>
-          </Menu>
-        </Box>
-
-        {/* Right side: Profile Picture, Name, Logout */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }} onClick={handleProfileMenuOpen}>
-          <Avatar
-            src={userPicture}
-            alt={userName}
-            sx={{
-              width: 40,
-              height: 40,
-              border: '2px solid #6ec1e4',
-              transition: 'transform 0.2s ease-in-out', // Animation for avatar
-              '&:hover': { transform: 'scale(1.1)' }
-            }}
-          />
-          <Typography variant="h6" fontWeight={500} sx={{ color: '#fff', transition: 'transform 0.3s ease-in-out', '&:hover': { transform: 'translateX(3px)' } }}>{userName}</Typography>
-          <Menu
-            anchorEl={profileMenuAnchorEl}
-            open={isProfileMenuOpen}
-            onClose={handleProfileMenuClose}
-            PaperProps={{
-              sx: {
-                background: 'rgba(18, 24, 36, 0.98)',
-                color: '#fff',
-                borderRadius: 2,
-                boxShadow: '0 4px 16px rgba(16,21,28,0.6)',
-                border: '1px solid #233',
-                 animation: 'menuFadeIn 0.3s ease-out' // Animation for menu
-              }
-            }}
-          >
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
-        </Box>
-      </Box>
-
-      {/* Main Content: Date Input Bar */}
-      <Box sx={{
-        flexGrow: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 4,
-        px: 2,
-      }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(18, 24, 36, 0.85)',
-            borderRadius: 5,
-            boxShadow: '0 4px 32px 0 rgba(16, 21, 28, 0.45)',
-            p: 2,
-            border: '1px solid #233',
-            maxWidth: 600,
-            width: '100%',
-            animation: 'fadeInScale 1.5s ease-out' // Animation for the input bar
+  function getRandomStars(num = 100) {
+    return Array.from({ length: num }).map((_, i) => {
+      const size = Math.random() * 2 + 1;
+      const top = Math.random() * 100;
+      const left = Math.random() * 100;
+      const delay = Math.random() * 2;
+      return (
+        <div
+          key={i}
+          className="star"
+          style={{
+            width: size,
+            height: size,
+            top: `${top}%`,
+            left: `${left}%`,
+            animationDelay: `${delay}s`,
           }}
-        >
-          <TextField
-            label="Enter a Date"
-            type="date"
-            value={selectedDate}
-            onChange={handleDateInputChange}
-            InputLabelProps={{
-              shrink: true,
-              sx: { color: '#b0c4de', fontSize: 20 }
-            }}
-            InputProps={{
-              disableUnderline: true,
-              sx: {
-                fontSize: 24,
-                fontWeight: 600,
-                color: '#fff',
-                // Add a subtle input focus animation
-                 '&:focus': { boxShadow: '0 0 8px rgba(110,193,228,0.5)' }
-              },
-               // Restrict date selection
-              inputProps: {
-                max: maxDate
-              }
-            }}
-            variant="standard"
-            fullWidth
-            sx={{
-              marginRight: 2,
-              input: { caretColor: '#6ec1e4' }
-            }}
-          />
-          <IconButton
-            onClick={handleArrowClick}
-            sx={{
-              color: '#6ec1e4',
-              fontSize: 30,
-              transition: 'transform 0.3s ease-in-out', // Animation for arrow button
-              '&:hover': { transform: 'translateX(5px) scale(1.1)' }
-            }}
-          >
-            <ArrowForwardIcon sx={{ fontSize: 30 }} />
-          </IconButton>
-        </Box>
-      </Box>
+        />
+      );
+    });
+  }
 
-      {/* Dialog for date details */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} PaperProps={{
-        sx: {
-          background: 'linear-gradient(135deg, #143d81 0%, #6ec1e4 100%)',
+  return (
+    <>
+      <div className="space-bg-anim">
+        {getRandomStars(100)}
+      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'radial-gradient(ellipse at 60% 40%, #05070d 0%, #10131a 100%)',
           color: '#fff',
-          borderRadius: 4,
-          boxShadow: '0 8px 32px 0 #143d81',
-          minWidth: 300,
-          p: 2,
-           animation: 'dialogSlideIn 0.4s ease-out' // Animation for dialog
-        }
-      }}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', background: 'rgba(10,20,40,0.7)', borderRadius: '16px 16px 0 0', mx: -2, mt: -2, px: 2, pt: 2, pb: 1 }}>
-          <span>Details for {selectedDate || 'Selected Date'}</span>
-          <IconButton onClick={handleCloseDialog} sx={{ color: '#fff' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-             Hi {userName},
-          </Typography>
-          <Typography>
-            This is a demo for the date: {selectedDate || 'No date selected'}.
-          </Typography>
-          {/* Add more details here later */}
-        </DialogContent>
-      </Dialog>
-
-      {/* Space/Star animations (optional, can be enhanced) */}
-      {/* Add your animation elements here, ensure they are positioned absolutely and don't interfere with layout */}
-      <div className="space-bg-anim" /> {/* Assuming this class handles background animations */}
-    </Box>
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          animation: 'fadeIn 1s ease-out',
+          fontFamily: 'Inter, Arial, sans-serif',
+        }}
+      >
+        {/* Tabs */}
+        <Box sx={{ width: '100%', bgcolor: 'rgba(10,12,18,0.95)', borderBottom: '1px solid #232b3e', zIndex: 2 }}>
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} centered textColor="inherit" TabIndicatorProps={{ style: { background: '#6ec1e4' } }}>
+            <Tab label="Home" sx={{ color: '#fff', fontWeight: 700, fontSize: 18 }} />
+            <Tab label="Space News" sx={{ color: '#fff', fontWeight: 700, fontSize: 18 }} />
+          </Tabs>
+        </Box>
+        {/* Main Content */}
+        {tab === 0 && (
+          <Box sx={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            py: 4,
+            px: 2,
+          }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(10, 12, 18, 0.95)',
+                borderRadius: 5,
+                boxShadow: '0 4px 32px 0 rgba(16, 21, 28, 0.45)',
+                p: 2,
+                border: '1px solid #222',
+                maxWidth: 600,
+                width: '100%',
+                animation: 'fadeInScale 1.5s ease-out',
+                mb: 4,
+              }}
+            >
+              <TextField
+                label="Enter a Date"
+                type="date"
+                value={selectedDate}
+                onChange={handleDateInputChange}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { color: '#b0c4de', fontSize: 20 }
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                  sx: {
+                    fontSize: 24,
+                    fontWeight: 600,
+                    color: '#fff',
+                    // Add a subtle input focus animation
+                     '&:focus': { boxShadow: '0 0 8px rgba(110,193,228,0.5)' }
+                  },
+                   // Restrict date selection
+                  inputProps: {
+                    max: maxDate
+                  }
+                }}
+                variant="standard"
+                fullWidth
+                sx={{
+                  marginRight: 2,
+                  input: { caretColor: '#6ec1e4' }
+                }}
+              />
+              <IconButton
+                onClick={handleArrowClick}
+                sx={{
+                  color: '#6ec1e4',
+                  fontSize: 30,
+                  transition: 'transform 0.3s ease-in-out', // Animation for arrow button
+                  '&:hover': { transform: 'translateX(5px) scale(1.1)' }
+                }}
+              >
+                <ArrowForwardIcon sx={{ fontSize: 30 }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
+        {tab === 1 && (
+          <Box sx={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            py: 4,
+            px: 2,
+          }}>
+            <Box sx={{
+              width: '100%',
+              maxWidth: 600,
+              background: 'rgba(10, 12, 18, 0.92)',
+              borderRadius: 5,
+              boxShadow: '0 2px 16px 0 rgba(16,21,28,0.25)',
+              border: '1px solid #232b3e',
+              p: 3,
+              mt: 2,
+            }}>
+              <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, mb: 2, letterSpacing: '0.04em', fontSize: 22 }}>
+                Top Space & Astronomy News
+              </Typography>
+              {newsLoading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight={80}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                  {news.map((item, idx) => (
+                    <Box
+                      key={idx}
+                      component="li"
+                      sx={{
+                        mb: 2,
+                        p: 2,
+                        borderRadius: 3,
+                        background: 'rgba(255,255,255,0.03)',
+                        boxShadow: '0 1px 6px 0 rgba(110,193,228,0.08)',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                        '&:hover': {
+                          background: 'rgba(110,193,228,0.10)',
+                        },
+                      }}
+                      onClick={() => setSelectedNews(item)}
+                    >
+                      <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, fontSize: 18 }}>
+                        {item.headline}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+            {/* News Dialog */}
+            <Dialog open={!!selectedNews} onClose={() => setSelectedNews(null)} maxWidth="sm" fullWidth>
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#10131a', color: '#fff' }}>
+                {selectedNews?.headline}
+                <IconButton onClick={() => setSelectedNews(null)} size="small" sx={{ color: '#fff' }}>
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent sx={{ background: '#181f2a', color: '#fff' }}>
+                <Typography variant="body1" sx={{ mb: 2 }}>{selectedNews?.brief}</Typography>
+                {selectedNews?.source && (
+                  <Typography variant="body2">
+                    Source: <a href={selectedNews.source} target="_blank" rel="noopener noreferrer" style={{ color: '#6ec1e4', textDecoration: 'underline' }}>{selectedNews.source}</a>
+                  </Typography>
+                )}
+              </DialogContent>
+            </Dialog>
+          </Box>
+        )}
+        {/* Dialog for date details (always available, but only triggered from Home tab) */}
+        <AstronomyEventDialog open={dialogOpen} onClose={handleCloseDialog} date={selectedDate} />
+      </Box>
+    </>
   );
 };
 
