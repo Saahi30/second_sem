@@ -294,7 +294,7 @@ const LoginScreen: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
               color="#b0c4de"
               sx={{ userSelect: 'none' }}
             >
-              Don’t have an account?{' '}
+              Don't have an account?{' '}
               <Link
                 component="button"
                 variant="body2"
@@ -601,6 +601,12 @@ function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Show splash on every visit
+  useEffect(() => {
+    setShowSplash(true);
+  }, []);
 
   useEffect(() => {
     // Get current session
@@ -612,6 +618,7 @@ function App() {
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setShowSplash(true); // Show splash on sign in/out
     });
 
     return () => {
@@ -620,11 +627,17 @@ function App() {
   }, []);
 
   const handleLogout = async () => {
+    setShowSplash(true);
     await supabase.auth.signOut();
   };
 
+  // SplashScreen always shown until animation completes
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
   if (isLoading) {
-    return <SplashScreen />;
+    return null;
   }
 
   if (session) {
@@ -632,9 +645,9 @@ function App() {
   }
 
   return isSignUp ? (
-    <SignUpScreen onSwitch={() => setIsSignUp(false)} />
+    <SignUpScreen onSwitch={() => { setIsSignUp(false); setShowSplash(true); }} />
   ) : (
-    <LoginScreen onSwitch={() => setIsSignUp(true)} />
+    <LoginScreen onSwitch={() => { setIsSignUp(true); setShowSplash(true); }} />
   );
 }
 
